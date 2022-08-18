@@ -369,9 +369,9 @@ class Algorithm(School, Student):
             os.makedirs(path)
 
         self.student_result_df.to_pickle(path + "student.pkl")
-        self.student_result_df.to_excel(
-            path + "result.xlsx", sheet_name="student", index=False
-        )
-
         self.school_result_df.to_pickle(path + "school.pkl")
-        self.school_result_df.to_excel(path + "result.xlsx", sheet_name="school")
+
+        writer = pd.ExcelWriter(path + "result.xlsx", engine="xlsxwriter")
+        self.student_result_df.to_excel(writer, sheet_name="student", index=False)
+        self.school_result_df.to_excel(writer, sheet_name="school")
+        writer.save()
