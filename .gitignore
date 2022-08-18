@@ -66,3 +66,6 @@
 # !/**/*.html
 # !/**/*.png
 # !/**/*.pdf
+
+# Output file 
+!data/output/*.xlsx
