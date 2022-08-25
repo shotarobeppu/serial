@@ -1,21 +1,13 @@
 # %%
 import sys
 import os
-import importlib
-
 sys.path.append(os.path.abspath("src"))
 import school
 import student
 import algorithm
 
-
-# %%
-importlib.reload(school)
-importlib.reload(student)
-importlib.reload(algorithm)
-
 DATA_PATH = "../data/"
-EXCEL_PATH = DATA_PATH + "raw/UTMDへの提供データ（全学交換留学秋募集ダミーデータ）20220804更新.xlsx"
+EXCEL_PATH = DATA_PATH + "raw/UTMDへの提供データ（全学交換留学秋募集ダミーデータ）20220824更新.xlsx"
 
 match = algorithm.Algorithm(EXCEL_PATH)
 match.create_schools()
@@ -24,18 +16,15 @@ match.set_graduate_ratio_threshold()
 match.create_places()
 match.init_algorithm()
 
-# while len(match.unassigned_list) > 0:
+match.mdf
+# %%
 
-# loop through unassigned students by rank
 for r in sorted(match.unassigned_list):
 
     applicant = student.Student(match.mdict[r])
 
     applicant.create_preference()
 
-    # applicant_matched = []
-
-    # loop through student's preferred schools
     for s in range(len(applicant.dict["school"])):
 
         if r not in match.unassigned_list:
@@ -56,16 +45,30 @@ for r in sorted(match.unassigned_list):
 
         match.accept_student(applied_school, applicant)
 
-        # applicant_matched.append(match.matched_)
-
-    # if sum(applicant_matched) == 0:
-
-    #     match.unassigned_list.remove(r)
-    #     match.failed_list.append(r)
-
 match.output_result()
-
 save_path = "../data/output/"
-
 match.save_result(save_path)
+
+
 # %%
+
+a_df = match.student_result_df.copy()
+
+accepted_preference_rank = []
+
+for index, row in a_df.iterrows():
+
+    _assigned_school = row['assigned_school']
+
+    if _assigned_school is not None:
+        _accepted_preference_rank = row['school'].index(row['assigned_school'])
+    else:
+        _accepted_preference_rank = None
+
+    accepted_preference_rank.append(_accepted_preference_rank)
+
+accepted_preference_rank = [i+1 for i in accepted_preference_rank if i is not None]
+
+print("average preference of accepted: ", sum(accepted_preference_rank)/len(accepted_preference_rank))
+
+print("number of students not matched: ", match.student_result_df.assigned_school.isnull().sum())

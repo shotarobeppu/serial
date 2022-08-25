@@ -41,6 +41,9 @@ class Algorithm(School, Student):
         _mdf = _mdf.dropna(subset="学内選考順位").assign(
             graduate=lambda d: d["学部学生(U)/大学院生(G)"].apply(
                 lambda x: 1 if x == "G" else 0
+            ),
+            student_type = lambda d: d["志望校優先/期間優先"].apply(
+                lambda x: 'length' if x == "期間優先" else 'school' if x == "志望校優先" else "whatever"
             )
         )
 
@@ -95,13 +98,15 @@ class Algorithm(School, Student):
             mean_semester = np.mean(semester)
             mean_one_sem = np.mean(one_sem)
 
-            student_type = (
-                "length"
-                if (mean_semester == 2 and one_sem[0] == 0)
-                else "school"
-                if (one_sem[0] != 1 and mean_semester != 2)
-                else "whatever"
-            )
+            # student_type = (
+            #     "length"
+            #     if (mean_semester == 2 and one_sem[0] == 0)
+            #     else "school"
+            #     if (one_sem[0] != 1 and mean_semester != 2)
+            #     else "whatever"
+            # )
+
+            student_type = row['student_type']
 
             period_preference = list(zip(school_period, school_1sem))
             period_preference_unit = list(zip(semester, one_sem))

@@ -40,17 +40,22 @@ class School:
         else:
             self.accept_graduate_ = True
 
+        _graduate_programs = [
+            "イェール大学(Fox International Fellowship Program)",
+            "プリンストン大学（大学院）",
+            "EHESS(社会科学高等研究院)",
+        ]
+
+        if self.dict["school_name"] in _graduate_programs:
+            self.accept_graduate_ = True
+
         return self.accept_graduate_
 
     def modify_accepted_student_rank_list(self, student_dict, type="drop"):
 
         if type == "drop":
             self.dict["accepted_student_rank"].remove(student_dict["rank"])
-            self.dict["accepted_period"].remove(
-                student_dict["assigned_period_name"]
-            )
+            self.dict["accepted_period"].remove(student_dict["assigned_period_name"])
         elif type == "add":
             self.dict["accepted_student_rank"].append(student_dict["rank"])
-            self.dict["accepted_period"].append(
-                student_dict["assigned_period_name"]
-            )
+            self.dict["accepted_period"].append(student_dict["assigned_period_name"])
