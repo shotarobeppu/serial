@@ -16,7 +16,6 @@ match.set_graduate_ratio_threshold()
 match.create_places()
 match.init_algorithm()
 
-match.mdf
 # %%
 
 for r in sorted(match.unassigned_list):
@@ -47,7 +46,7 @@ for r in sorted(match.unassigned_list):
 
 match.output_result()
 save_path = "../data/output/"
-match.save_result(save_path)
+# match.save_result(save_path)
 
 
 # %%

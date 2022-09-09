@@ -5,6 +5,7 @@ import utils
 import pandas as pd
 import numpy as np
 import os
+import random
 
 
 class Algorithm(School, Student):
@@ -42,9 +43,13 @@ class Algorithm(School, Student):
             graduate=lambda d: d["学部学生(U)/大学院生(G)"].apply(
                 lambda x: 1 if x == "G" else 0
             ),
-            student_type = lambda d: d["志望校優先/期間優先"].apply(
-                lambda x: 'length' if x == "期間優先" else 'school' if x == "志望校優先" else "whatever"
-            )
+            student_type=lambda d: d["志望校優先/期間優先"].apply(
+                lambda x: "length"
+                if x == "期間優先"
+                else "school"
+                if x == "志望校優先"
+                else "whatever"
+            ),
         )
 
         mdict = {}
@@ -106,7 +111,7 @@ class Algorithm(School, Student):
             #     else "whatever"
             # )
 
-            student_type = row['student_type']
+            student_type = row["student_type"]
 
             period_preference = list(zip(school_period, school_1sem))
             period_preference_unit = list(zip(semester, one_sem))
@@ -208,6 +213,26 @@ class Algorithm(School, Student):
             place_dict[school] = _slot_dict
 
         self.places = place_dict
+
+    def create_additional(self, max_school=6):
+
+        schools_list = self.sdict.keys()
+
+        for i in range(1, len(self.mdict) + 1):
+
+            _mdict = self.mdict[i]
+            _used_slot = _mdict["total_school"]
+            _left_slot = max_school
+
+            _additional_school_num = random.sample(range(0, _left_slot), 1)[0]
+
+            _additional_school = random.sample(
+                list(schools_list), _additional_school_num
+            )
+
+            for s in _additional_school:
+
+                pass
 
     def init_algorithm(self):
 
