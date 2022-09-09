@@ -145,7 +145,7 @@ class Algorithm(School, Student):
             .set_index("大学名（和）")
             .assign(
                 place=lambda d: d["20XX-20XX派遣枠"].apply(
-                    lambda x: 1 if x == "若干" else x
+                    lambda x: 10 if x == "若干" else x
                 ),
                 unit=lambda d: d["Unnamed: 3"].apply(
                     lambda x: "semester" if x == ("セメ" or "QP") else "head"
