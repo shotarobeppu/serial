@@ -216,23 +216,28 @@ class Algorithm(School, Student):
 
     def create_additional(self, max_school=6):
 
-        schools_list = self.sdict.keys()
+        pref_dict = {}
+        d_idx = 0
 
         for i in range(1, len(self.mdict) + 1):
 
             _mdict = self.mdict[i]
-            _used_slot = _mdict["total_school"]
-            _left_slot = max_school
+            _student = Student(_mdict)
 
-            _additional_school_num = random.sample(range(0, _left_slot), 1)[0]
+            _student.create_preference()
 
-            _additional_school = random.sample(
-                list(schools_list), _additional_school_num
-            )
+            for p in range(len(_student.pref)):
 
-            for s in _additional_school:
+                pref_dict[d_idx] = _student.pref[p]
 
-                pass
+                d_idx += 1
+
+        for i in range(1, len(self.mdict) + 1):
+
+            _mdict = self.mdict[i]
+            max_additional_school = max_school - _mdict["total_school"]
+
+            
 
     def init_algorithm(self):
 
