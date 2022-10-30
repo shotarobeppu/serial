@@ -6,6 +6,7 @@ import pandas as pd
 import numpy as np
 import os
 import random
+import warnings
 
 
 class Algorithm(School, Student):
@@ -15,7 +16,7 @@ class Algorithm(School, Student):
     def create_schools(self):
 
         semester_list = ['セメ', 'QP']
-
+        warnings.simplefilter(action='ignore', category=UserWarning)
         _sdf = (
             pd.read_excel(
                 self.excel_path,
@@ -85,42 +86,33 @@ class Algorithm(School, Student):
                     "Spring": 4,
                 }
 
+            if _school_dict["school_name"] in ["スイス連邦工科大学チューリッヒ(ETH)", "マギル大学", "ブリティッシュ・コロンビア大学(UBC)"]:
+                _slot_dict = {
+                        "total": _total_slots,
+                        "Autumn&Spring": _total_slots,
+                        "Autumn": _total_slots * 0.8,
+                        "Spring": _total_slots * 0.8
+                    }
+
+
+            if _school_dict["school_name"] in ["ウプサラ大学"]:
+                _slot_dict = {
+                        "total": _total_slots,
+                        "Autumn&Spring": _total_slots,
+                        "Autumn": _total_slots,
+                        "Spring": _total_slots * 0.5
+                    }
+
             place_dict[school] = _slot_dict
 
         self.places = place_dict
-
-    def create_additional_preference(self, max_school=6):
-        def _generate_all_preferences(self):
-
-            for i in range(1, len(self.mdict) + 1):
-
-                pass
-
-        pref_dict = {}
-        d_idx = 0
-
-        for i in range(1, len(self.mdict) + 1):
-
-            _mdict = self.mdict[i]
-            _student = Student(_mdict)
-
-            _student.create_preference()
-
-            for p in range(len(_student.pref)):
-
-                pref_dict[d_idx] = _student.pref[p]
-
-                d_idx += 1
-
-        for i in range(1, len(self.mdict) + 1):
-
-            _mdict = self.mdict[i]
-            max_additional_school = max_school - _mdict["total_school"]
 
     def init_algorithm(self, student):
 
         self.unassigned_list = list(student.mdict.keys())
         self.failed_list = []
+
+        self.create_places()
 
     def set_graduate_ratio_threshold(self, student):
 
@@ -156,7 +148,7 @@ class Algorithm(School, Student):
 
         if len(_worst_rank_students) != 0:
             for _rank in _worst_rank_students:
-                dropped_student = self.mdict[_rank].copy()
+                dropped_student = student.mdict[_rank].copy()
                 print(dropped_student)
                 school.modify_accepted_student_rank_list(dropped_student, type="drop")
                 self.modify_unassigned(dropped_student, type="add")
@@ -223,6 +215,34 @@ class Algorithm(School, Student):
             self.unassigned_list.remove(student_dict["rank"])
         elif type == "add":
             self.unassigned_list.append(student_dict["rank"])
+
+    def do_matching(self, applicants):
+
+        for r in sorted(self.unassigned_list):
+
+            applicant = applicants.select_student(r)
+
+            schools_applied = list(dict.fromkeys([d['pref_school_name'] for d in applicant.pref.values()]))
+
+            for s in range(len(schools_applied)):
+
+                if r not in self.unassigned_list:
+                    continue
+
+                school_name = schools_applied[s]
+                school_dict = self.sdict[school_name]
+                place_dict = self.places[school_name]
+                applied_school = School(school_dict, applicants.mdict, place_dict)
+
+                if not applicant.is_eligible(school_name):
+                    continue
+
+                if applicant.dict["graduate"] and (
+                    applied_school.accept_graduate(self.graduate_ratio) is False
+                ):
+                    continue
+
+                self.accept_student(applied_school, applicant)
 
     def output_result(self, students):
 

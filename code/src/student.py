@@ -1,11 +1,15 @@
+from urllib.response import addinfo
 import pandas as pd
 import numpy as np
 import utils
+import random
+import warnings
 
 
 class Student:
     def __init__(self, excel_path):
 
+        warnings.simplefilter(action="ignore", category=UserWarning)
         _mdf = pd.read_excel(
             excel_path,
             sheet_name="A 割り振り対象者",
@@ -82,7 +86,12 @@ class Student:
                 "Other（T3-T1）",
             ]
 
-            two_sem_list = ["Autumn&Spring", "Other（WQ-SQ）", "Other（AQ-WQ）", "Other（T3-T1-T2）"]
+            two_sem_list = [
+                "Autumn&Spring",
+                "Other（WQ-SQ）",
+                "Other（AQ-WQ）",
+                "Other（T3-T1-T2）",
+            ]
 
             three_sem_list = ["Other（AQ-WQ-SQ）"]
 
@@ -145,13 +154,11 @@ class Student:
         self.mdf = _mdf
         self.mdict = mdict
 
-    def select_student(self, student_rank):
-
-        self.dict = self.mdict[student_rank]
-
-        return self
-
     def is_eligible(self, school_name):
+
+        if school_name not in self.dict["school"]:
+            self.is_eligible_ = True
+            return self.is_eligible_
 
         _preference_index = self.dict["school"].index(school_name)
         _eligibility = self.dict["school_eligible"][_preference_index]
@@ -165,64 +172,141 @@ class Student:
 
     def create_preference(self):
 
-        _type = self.dict["student_type"]
+        self.prefs = {}
+        all_prefs = {}
 
-        pref = {}
+        all_prefs_idx = 0
 
-        i = 0
+        for s_idx in range(1, len(self.mdict) + 1):
 
-        if _type == "whatever" or "school":
+            self.dict = self.mdict[s_idx]
 
-            for s in range(len(self.dict["school"])):
+            _type = self.dict["student_type"]
 
-                _school = self.dict["school"][s]
-                _period_preference = self.dict["period_preference"][s]
-                _period_preference_unit = self.dict["period_preference_unit"][s]
+            pref = {}
 
-                if self.is_eligible(_school) is False:
-                    continue
+            i = 0
 
-                for p in range(len(_period_preference)):
+            if _type == "whatever" or "school":
 
-                    if _period_preference[p] == 0:
-                        continue
-
-                    pref[i] = {
-                        "pref_school_name": _school,
-                        "pref_school_rank": s,
-                        "pref_period_rank": p,
-                        "pref_period": _period_preference[p],
-                        "pref_period_unit": _period_preference_unit[p],
-                        "head": 1,
-                    }
-
-                    i += 1
-
-        elif _type == "length":
-
-            for p in range(2):
                 for s in range(len(self.dict["school"])):
 
                     _school = self.dict["school"][s]
-                    _period_preference = self.dict["period_preference"][s][p]
+                    _period_preference = self.dict["period_preference"][s]
+                    _period_preference_unit = self.dict["period_preference_unit"][s]
 
-                    if _period_preference == 0:
+                    if self.is_eligible(_school) is False:
                         continue
 
-                    _period_preference_unit = self.dict["period_preference_unit"][s][p]
+                    for p in range(len(_period_preference)):
 
-                    pref[i] = {
-                        "pref_school_name": _school,
-                        "pref_school_rank": s,
-                        "pref_period_rank": p,
-                        "pref_period": _period_preference,
-                        "pref_period_unit": _period_preference_unit,
-                        "head": 1,
-                    }
+                        if _period_preference[p] == 0:
+                            continue
 
-                    i += 1
+                        _pref = {
+                            "pref_school_name": _school,
+                            "pref_school_rank": s,
+                            "pref_period_rank": p,
+                            "pref_period": _period_preference[p],
+                            "pref_period_unit": _period_preference_unit[p],
+                            "head": 1,
+                        }
 
-        self.pref = pref
+                        pref[i] = _pref
+                        all_prefs[all_prefs_idx] = _pref
+
+                        i += 1
+                        all_prefs_idx += 1
+
+            elif _type == "length":
+
+                for p in range(2):
+                    for s in range(len(self.dict["school"])):
+
+                        _school = self.dict["school"][s]
+                        _period_preference = self.dict["period_preference"][s][p]
+
+                        if _period_preference == 0:
+                            continue
+
+                        _period_preference_unit = self.dict["period_preference_unit"][
+                            s
+                        ][p]
+
+                        _pref = {
+                            "pref_school_name": _school,
+                            "pref_school_rank": s,
+                            "pref_period_rank": p,
+                            "pref_period": _period_preference[p],
+                            "pref_period_unit": _period_preference_unit[p],
+                            "head": 1,
+                        }
+
+                        pref[i] = _pref
+                        all_prefs[all_prefs_idx] = _pref
+
+                        i += 1
+                        all_prefs_idx += 1
+
+            self.prefs[s_idx] = pref
+
+        self.all_prefs = all_prefs
+
+    def add_preference(self, max_school_applied=6):
+
+        period_rank_0_prefs = {
+            k: v for (k, v) in self.all_prefs.items() if v["pref_period_rank"] == 0
+        }
+
+        for idx in range(1, len(self.prefs) + 1):
+
+            _student_pref = {}
+            _student_pref = self.prefs[idx].copy()
+            _listed_schools = [
+                v["pref_school_name"] for (k, v) in _student_pref.items()
+            ]
+
+            potential_additional_prefs = {
+                k: v
+                for (k, v) in period_rank_0_prefs.items()
+                if v["pref_school_name"] not in _listed_schools
+            }
+
+            if len(_student_pref) == 0:
+                continue
+
+            schools_applied = list(
+                set([d["pref_school_name"] for d in _student_pref.values()])
+            )
+            total_school_applied = len(schools_applied)
+
+            if total_school_applied != 3:
+                continue
+
+            while total_school_applied < max_school_applied:
+
+                additional_pref = self.all_prefs[
+                    random.sample(list(potential_additional_prefs), 1)[0]
+                ].copy()
+                additional_pref["pref_school_rank"] = total_school_applied
+
+                if additional_pref["pref_school_name"] not in schools_applied:
+                    _student_pref[max(_student_pref.keys()) + 1] = additional_pref
+
+                total_school_applied = len(
+                    list(set([d["pref_school_name"] for d in _student_pref.values()]))
+                )
+
+            self.prefs[idx] = _student_pref
+
+    def select_student(self, student_rank):
+
+        self.student_rank = student_rank
+
+        self.dict = self.mdict[student_rank]
+        self.pref = self.prefs[student_rank]
+
+        return self
 
     def filter_preference_by_slot(self, places_dict, school_name):
         """
@@ -244,10 +328,15 @@ class Student:
 
             if place_dict["total"] < _eligible_pref[d]["pref_period_unit"]:
                 del _eligible_pref[d]
+                print("not enough room")
                 continue
 
-            if _preferred_period in place_dict.keys() and place_dict[_preferred_period] == 0:
+            if (
+                _preferred_period in place_dict.keys()
+                and place_dict[_preferred_period] == 0
+            ):
                 del _eligible_pref[d]
+                print("not enough room")
                 continue
 
         if len(_eligible_pref) == 0:

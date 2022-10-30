@@ -22,6 +22,8 @@ match.create_schools()
 
 applicants = student.Student(EXCEL_PATH)
 applicants.create_students()
+applicants.create_preference()
+applicants.add_preference(max_school_applied = 10)
 
 match.set_graduate_ratio_threshold(applicants)
 match.create_places()
@@ -33,14 +35,14 @@ for r in sorted(match.unassigned_list):
 
     applicant = applicants.select_student(r)
 
-    applicant.create_preference()
+    schools_applied = list(dict.fromkeys([d['pref_school_name'] for d in applicant.pref.values()]))
 
-    for s in range(len(applicant.dict["school"])):
+    for s in range(len(schools_applied)):
 
         if r not in match.unassigned_list:
             continue
 
-        school_name = applicant.dict["school"][s]
+        school_name = schools_applied[s]
         school_dict = match.sdict[school_name]
         place_dict = match.places[school_name]
         applied_school = school.School(school_dict, applicants.mdict, place_dict)
@@ -54,9 +56,6 @@ for r in sorted(match.unassigned_list):
             continue
 
         match.accept_student(applied_school, applicant)
-
-        if school_name == 'ワシントン大学':
-            print(applicant.dict)
 
 match.output_result(applicants)
 save_path = "../data/output/"
@@ -74,7 +73,7 @@ for index, row in a_df.iterrows():
     _assigned_school = row["assigned_school"]
 
     if _assigned_school is not None:
-        _accepted_preference_rank = row["school"].index(row["assigned_school"])
+        _accepted_preference_rank = row["school"].index(row["assigned_school"]) if _assigned_school in row["school"] else len(row['school']) + 1 if (_assigned_school is not None) else None
     else:
         _accepted_preference_rank = None
 
