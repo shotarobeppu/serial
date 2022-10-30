@@ -12,142 +12,9 @@ class Algorithm(School, Student):
     def __init__(self, excel_path):
         self.excel_path = excel_path
 
-    def create_students(self):
-
-        _mdf = pd.read_excel(
-            self.excel_path,
-            sheet_name="A 割り振り対象者",
-            header=None,
-            skiprows=2,
-        )
-
-        before = _mdf.loc[0, :].fillna(method="ffill")
-
-        new_column = []
-        for i in range(len(_mdf.loc[1, :])):
-
-            current_variable = _mdf.loc[1, i]
-            prefix = before[i]
-
-            if isinstance(prefix, float) and np.isnan(prefix):
-                new_variable = current_variable
-            else:
-                new_variable = str(prefix) + "_" + str(current_variable)
-
-            new_column.append(new_variable)
-
-        _mdf = _mdf.loc[2:, :]
-        _mdf = _mdf.set_axis(new_column, axis=1)
-
-        _mdf = _mdf.dropna(subset="学内選考順位").assign(
-            graduate=lambda d: d["学部学生(U)/大学院生(G)"].apply(
-                lambda x: 1 if x == "G" else 0
-            ),
-            student_type=lambda d: d["志望校優先/期間優先"].apply(
-                lambda x: "length"
-                if x == "期間優先"
-                else "school"
-                if x == "志望校優先"
-                else "whatever"
-            ),
-        )
-
-        mdict = {}
-        for index, row in _mdf.iterrows():
-
-            _id = row["ID"]
-            rank = row["学内選考順位"]
-
-            graduate = False
-            if row["graduate"]:
-                graduate = True
-
-            school_columns = [column for column in _mdf.columns if "_大学名（和文）" in column]
-            school = row[school_columns].tolist()
-            school = [x for x in school if utils.check_nan(x) == False]
-
-            num_school = len(school)
-
-            school_period_columns = [
-                column for column in _mdf.columns if "_希望\n学期" in column
-            ]
-            school_period = row[school_period_columns].tolist()[:num_school]
-
-            'Other（AQ-WQ-SQ）'
-
-            one_sem_list = [
-                "Autumn",
-                "Spring",
-                "Other（Term3-Term1）",
-                "Other（AQ）",
-                "Other（AQ)",
-                "Other（T3-T1）",
-            ]
-
-            two_sem_list = [
-                'Other（WQ-SQ）',
-                'Other（AQ-WQ）',
-                'Other（T3-T1-T2）'
-            ]
-
-            three_sem_list = ['Other（AQ-WQ-SQ）']
-
-            for i in range(len(school_period)):
-                if school_period[i] == (
-                    "Spring&Autumn"
-                ):
-                    school_period[i] = "Autumn&Spring"
-
-            semester = [
-                2 if s in two_sem_list else 1 if s in one_sem_list else 3 if s in three_sem_list else 0
-                for s in school_period
-            ]
-
-            school_1sem_columns = [
-                column for column in _mdf.columns if "_1学期のみ派遣可の場合" in column
-            ]
-            school_1sem = row[school_1sem_columns].tolist()[:num_school]
-            one_sem = [
-                2 if s in two_sem_list else 1 if (s == "Autumn" or "Spring") else 0
-                for s in school_1sem
-            ]
-
-            school_eligible_columns = [
-                column for column in _mdf.columns if "_要件" in column
-            ]
-            school_eligible = row[school_eligible_columns].tolist()[:num_school]
-
-            head = [1 if isinstance(s, str) else 0 for s in school]
-
-            student_type = row["student_type"]
-
-            period_preference = list(zip(school_period, school_1sem))
-            period_preference_unit = list(zip(semester, one_sem))
-
-            mdict[rank] = {
-                "rank": rank,
-                "id": _id,
-                "graduate": graduate,
-                "school": school,
-                "school_period": school_period,
-                "school_1sem": school_1sem,
-                "school_eligible": school_eligible,
-                "semester": semester,
-                "one_sem": one_sem,
-                "period_preference": period_preference,
-                "period_preference_unit": period_preference_unit,
-                "head": head,
-                "total_school": num_school,
-                "student_type": student_type,
-                "assigned_school": None,
-                "assigned_period_name": None,
-                "assigned_period_unit": None,
-            }
-
-        self.mdf = _mdf
-        self.mdict = mdict
-
     def create_schools(self):
+
+        semester_list = ['セメ', 'QP']
 
         _sdf = (
             pd.read_excel(
@@ -161,7 +28,7 @@ class Algorithm(School, Student):
                     lambda x: 10 if x == "若干" else x
                 ),
                 unit=lambda d: d["Unnamed: 3"].apply(
-                    lambda x: "semester" if x == ("セメ" or "QP") else "head"
+                    lambda x: "semester" if x in semester_list else "head"
                 ),
                 exist_cond=lambda d: d["派遣枠補足"].apply(
                     lambda x: False
@@ -171,6 +38,7 @@ class Algorithm(School, Student):
                 school_name=lambda d: d.index,
                 accepted_student_rank=lambda d: [[] for _ in range(len(d))],
                 accepted_period=lambda d: [[] for _ in range(len(d))],
+                accepted_period_unit = lambda d: [[] for _ in range(len(d))]
             )
         )
 
@@ -201,21 +69,20 @@ class Algorithm(School, Student):
                         "Spring": _total_slots / 2,
                     }
 
-                if _school_dict["school_name"] == "スウァスモアカレッジ":
-
-                    _slot_dict = {
-                        "total": 4,
-                        "Autumn&Spring": 4,
-                        "Autumn": 4,
-                        "Spring": 4,
-                    }
-
             else:
                 _slot_dict = {
                     "total": _total_slots,
                     "Autumn&Spring": _total_slots,
                     "Autumn": _total_slots,
                     "Spring": _total_slots,
+                }
+
+            if _school_dict["school_name"] == "スウァスモアカレッジ":
+                _slot_dict = {
+                    "total": 4,
+                    "Autumn&Spring": 4,
+                    "Autumn": 4,
+                    "Spring": 4,
                 }
 
             place_dict[school] = _slot_dict
@@ -250,14 +117,14 @@ class Algorithm(School, Student):
             _mdict = self.mdict[i]
             max_additional_school = max_school - _mdict["total_school"]
 
-    def init_algorithm(self):
+    def init_algorithm(self, student):
 
-        self.unassigned_list = list(self.mdict.keys())
+        self.unassigned_list = list(student.mdict.keys())
         self.failed_list = []
 
-    def set_graduate_ratio_threshold(self):
+    def set_graduate_ratio_threshold(self, student):
 
-        self.graduate_ratio = self.mdf["graduate"].sum() / len(self.mdf["graduate"])
+        self.graduate_ratio = student.mdf["graduate"].sum() / len(student.mdf["graduate"])
 
     def accept_student(self, school, student):
         """
@@ -330,7 +197,9 @@ class Algorithm(School, Student):
         if type == "add":
 
             _school_place["total"] -= _accepted_period_unit
-            _school_place[_accepted_period_name] -= 1
+
+            if _accepted_period_name in _school_place.keys():
+                _school_place[_accepted_period_name] -= 1
 
             if _accepted_period_name == "Autumn&Spring":
                 _school_place["Autumn"] -= 1
@@ -339,7 +208,8 @@ class Algorithm(School, Student):
         elif type == "drop":
 
             _school_place["total"] += _accepted_period_unit
-            _school_place[_accepted_period_name] += 1
+            if _accepted_period_name in _school_place.keys():
+                _school_place[_accepted_period_name] += 1
 
             if _accepted_period_name == "Autumn&Spring":
                 _school_place["Autumn"] += 1
@@ -354,14 +224,14 @@ class Algorithm(School, Student):
         elif type == "add":
             self.unassigned_list.append(student_dict["rank"])
 
-    def output_result(self):
+    def output_result(self, students):
 
         _student_result = {}
 
-        for key in self.mdict.keys():
+        for key in students.mdict.keys():
 
             _student_result[key] = {}
-            _student = self.mdict[key]
+            _student = students.mdict[key]
 
             _student_values = [
                 "rank",
@@ -387,6 +257,7 @@ class Algorithm(School, Student):
             _school_values = [
                 "accepted_student_rank",
                 "accepted_period",
+                "accepted_period_unit",
                 "unit",
                 "place",
                 "派遣枠補足",
@@ -395,6 +266,8 @@ class Algorithm(School, Student):
             _assigned_school_info = {
                 the_key: _school[the_key] for the_key in _school_values
             }
+
+            _assigned_school_info['total_slots_used'] = self.places[key]['total']
 
             _school_result[key] = _assigned_school_info
 
