@@ -73,14 +73,33 @@ class Algorithm(School, Student):
             ]
             school_period = row[school_period_columns].tolist()[:num_school]
 
+            'Other（AQ-WQ-SQ）'
+
+            one_sem_list = [
+                "Autumn",
+                "Spring",
+                "Other（Term3-Term1）",
+                "Other（AQ）",
+                "Other（AQ)",
+                "Other（T3-T1）",
+            ]
+
+            two_sem_list = [
+                'Other（WQ-SQ）',
+                'Other（AQ-WQ）',
+                'Other（T3-T1-T2）'
+            ]
+
+            three_sem_list = ['Other（AQ-WQ-SQ）']
+
             for i in range(len(school_period)):
                 if school_period[i] == (
-                    "Other" or "Other\nAQ-WQ-SQ" or "Spring&Autumn"
+                    "Spring&Autumn"
                 ):
                     school_period[i] = "Autumn&Spring"
 
             semester = [
-                2 if s == "Autumn&Spring" else 1 if (s == "Autumn" or "Spring") else 0
+                2 if s in two_sem_list else 1 if s in one_sem_list else 3 if s in three_sem_list else 0
                 for s in school_period
             ]
 
@@ -89,7 +108,7 @@ class Algorithm(School, Student):
             ]
             school_1sem = row[school_1sem_columns].tolist()[:num_school]
             one_sem = [
-                2 if s == "Autumn&Spring" else 1 if (s == "Autumn" or "Spring") else 0
+                2 if s in two_sem_list else 1 if (s == "Autumn" or "Spring") else 0
                 for s in school_1sem
             ]
 
@@ -99,17 +118,6 @@ class Algorithm(School, Student):
             school_eligible = row[school_eligible_columns].tolist()[:num_school]
 
             head = [1 if isinstance(s, str) else 0 for s in school]
-
-            mean_semester = np.mean(semester)
-            mean_one_sem = np.mean(one_sem)
-
-            # student_type = (
-            #     "length"
-            #     if (mean_semester == 2 and one_sem[0] == 0)
-            #     else "school"
-            #     if (one_sem[0] != 1 and mean_semester != 2)
-            #     else "whatever"
-            # )
 
             student_type = row["student_type"]
 
@@ -214,7 +222,12 @@ class Algorithm(School, Student):
 
         self.places = place_dict
 
-    def create_additional(self, max_school=6):
+    def create_additional_preference(self, max_school=6):
+        def _generate_all_preferences(self):
+
+            for i in range(1, len(self.mdict) + 1):
+
+                pass
 
         pref_dict = {}
         d_idx = 0
@@ -236,8 +249,6 @@ class Algorithm(School, Student):
 
             _mdict = self.mdict[i]
             max_additional_school = max_school - _mdict["total_school"]
-
-            
 
     def init_algorithm(self):
 
