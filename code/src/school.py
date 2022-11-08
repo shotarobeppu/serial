@@ -56,6 +56,8 @@ class School:
         if type == "drop":
             self.dict["accepted_student_rank"].remove(student_dict["rank"])
             self.dict["accepted_period"].remove(student_dict["assigned_period_name"])
+            self.dict["accepted_period_unit"].remove(student_dict["assigned_period_unit"])
         elif type == "add":
             self.dict["accepted_student_rank"].append(student_dict["rank"])
             self.dict["accepted_period"].append(student_dict["assigned_period_name"])
+            self.dict["accepted_period_unit"].append(student_dict["assigned_period_unit"])

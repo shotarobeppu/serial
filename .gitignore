@@ -68,5 +68,3 @@
 # !/**/*.pdf
 
 # Output file 
-!data/output/*.xlsx
-data/output/~$*.xlsx
