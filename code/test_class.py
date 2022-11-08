@@ -23,7 +23,7 @@ match.create_schools()
 applicants = student.Student(EXCEL_PATH)
 applicants.create_students()
 applicants.create_preference()
-applicants.add_preference(max_school_applied = 10)
+applicants.add_preference(max_school_applied = 3)
 
 match.set_graduate_ratio_threshold(applicants)
 match.create_places()
@@ -59,7 +59,7 @@ for r in sorted(match.unassigned_list):
 
 match.output_result(applicants)
 save_path = "../data/output/"
-# match.save_result(save_path)
+match.save_result(save_path)
 
 
 # %%
