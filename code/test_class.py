@@ -37,12 +37,13 @@ for r in sorted(match.unassigned_list):
 
     schools_applied = list(dict.fromkeys([d['pref_school_name'] for d in applicant.pref.values()]))
 
-    for s in range(len(schools_applied)):
+
+    for p in range(len(applicant.pref)):
 
         if r not in match.unassigned_list:
             continue
 
-        school_name = schools_applied[s]
+        school_name = applicant.pref[p]['pref_school_name']
         school_dict = match.sdict[school_name]
         place_dict = match.places[school_name]
         applied_school = school.School(school_dict, applicants.mdict, place_dict)
@@ -55,7 +56,8 @@ for r in sorted(match.unassigned_list):
         ):
             continue
 
-        match.accept_student(applied_school, applicant)
+        match.accept_student(applied_school, applicant, pref_rank = p)
+
 
 match.output_result(applicants)
 save_path = "../data/output/"

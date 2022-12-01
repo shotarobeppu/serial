@@ -187,7 +187,7 @@ class Student:
 
             i = 0
 
-            if _type == "whatever" or "school":
+            if _type in ["whatever", "school"]:
 
                 for s in range(len(self.dict["school"])):
 
@@ -237,8 +237,8 @@ class Student:
                             "pref_school_name": _school,
                             "pref_school_rank": s,
                             "pref_period_rank": p,
-                            "pref_period": _period_preference[p],
-                            "pref_period_unit": _period_preference_unit[p],
+                            "pref_period": _period_preference,
+                            "pref_period_unit": _period_preference_unit,
                             "head": 1,
                         }
 
@@ -308,7 +308,7 @@ class Student:
 
         return self
 
-    def filter_preference_by_slot(self, places_dict, school_name):
+    def filter_preference_by_slot(self, places_dict, school_name, pref_rank):
         """
         Dict of available slots with respect to
         "total", "Autumn", "Spring" and "Autumn&Spring"
@@ -320,7 +320,7 @@ class Student:
 
         for d in list(self.pref.keys()):
 
-            if _eligible_pref[d]["pref_school_name"] != school_name:
+            if d != pref_rank:
                 del _eligible_pref[d]
                 continue
 
