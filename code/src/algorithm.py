@@ -118,7 +118,7 @@ class Algorithm(School, Student):
 
         self.graduate_ratio = student.mdf["graduate"].sum() / len(student.mdf["graduate"])
 
-    def accept_student(self, school, student):
+    def accept_student(self, school, student, pref_rank):
         """
         Match school to student given its constraints and also the rankings.
         Remove students that is inferior to the incoming students. Inferior
@@ -161,7 +161,7 @@ class Algorithm(School, Student):
             return
 
         student.filter_preference_by_slot(
-            places_dict=self.places, school_name=_school_name
+            places_dict=self.places, school_name=_school_name, pref_rank = pref_rank
         )
 
         if student.possible_to_assign_:
