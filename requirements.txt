@@ -105,7 +105,7 @@ terminado=0.15.0=pypi_0
 tinycss2=1.1.1=pypi_0
 tk=8.6.12=h5d9f67b_0
 tomli=2.0.1=py310hecd8cb5_0
-tornado=6.2=py310h6c45266_0
+tornado>=6.3.2
 tqdm=4.64.1=pypi_0
 traitlets=5.3.0=pyhd8ed1ab_0
 tzdata=2022a=hda174b7_0
